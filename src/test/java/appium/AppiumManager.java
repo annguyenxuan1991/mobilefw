@@ -72,7 +72,6 @@ public class AppiumManager {
     }
 
     public void stopAppiumServer() {
-        ADB adb = new ADB(getUsedDeviceId());
         if (serviceThreadLocal.get() != null) {
             LOGGER.info("Uninstall application and stopping appium server for device " + getUsedDeviceName() + " >>>>>>>>>>>>>>>>>>>");
             adb.uninstallApp(System.getProperty("unlockPackage"));
@@ -91,8 +90,7 @@ public class AppiumManager {
 
     /**
      * Get all connected devices then put it into a hash map with Key = "device id"
-     * AND Value = "true/false".
-     *
+     * AND Value = "true/false"
      * @return HashMap
      */
     @SuppressWarnings("unchecked")
@@ -121,7 +119,7 @@ public class AppiumManager {
                 return entry.getKey();
             }
         }
-        LOGGER.debug("Not a single device free....");
+        LOGGER.debug("Not a single device is free >>>>>>>>>>>>>>");
         return null;
     }
 
