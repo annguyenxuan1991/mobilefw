@@ -1,16 +1,14 @@
-import appium.AppiumManager;
 import appium.AndroidDriverManager;
+import appium.AppiumManager;
 import io.appium.java_client.android.AndroidDriver;
 import org.openqa.selenium.Platform;
 import org.openqa.selenium.remote.service.DriverService;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import utils.CommonUtils;
 
-public class TestAndroidDriver extends FatherTest {
-
+public class TestAndroidDriver2 extends FatherTest {
     @Test
-    public void firstThread() {
+    public void secondThread() {
         appiumManager.startAppiumServer(Platform.ANDROID);
         DriverService appiumDriverService = appiumManager.getAppiumServerInstance();
         System.out.println("Appium service instance [PORT]: "+ appiumDriverService.getUrl().getPort());

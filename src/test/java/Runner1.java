@@ -9,7 +9,7 @@ import java.util.Properties;
 public class Runner1 {
     public static void main(String[] args) {
         CommonUtils.loadProperties("/src/test/resources");
-        AppiumManager appiumManager = new AppiumManager();
+        AppiumManager appiumManager = AppiumManager.getInstance();
         DriverService service = appiumManager.startAppiumServer(Platform.ANDROID);
         int port = appiumManager.getUsedPort();
         boolean a0 = service.isRunning();

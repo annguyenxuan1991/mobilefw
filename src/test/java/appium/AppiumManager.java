@@ -20,15 +20,30 @@ import java.util.HashMap;
 public class AppiumManager {
     private static final Logger LOGGER = Logger.getLogger(AppiumManager.class);
 
+    private static AppiumManager instance;
+
     private static final ThreadLocal<DriverService> serviceThreadLocal = new ThreadLocal<>();
+    private static final ThreadLocal<ADB> adbThreadLocal = new ThreadLocal<>();
     private static HashMap<String, Boolean> deviceMap;
-    private ADB adb;
+
+    private AppiumManager() {
+        if (deviceMap == null) {
+            LOGGER.info("Get all connecting devices using adb >>>>>>>>>>>>>>> " + Thread.currentThread().getName());
+            deviceMap = getConnectedDevices();
+        }
+    }
+
+    public static AppiumManager getInstance() {
+        if(instance == null) {
+            instance = new AppiumManager();
+        }
+        return instance;
+    }
 
     public DriverService startAppiumServer(Platform platform) {
-        String freeDevice = getFreeDevice();
-
-        adb = new ADB(freeDevice);
+        ADB adb = new ADB(getFreeDevice());
         DesiredCapabilities cap = new DesiredCapabilities();
+        adbThreadLocal.set(adb);
 
         cap.setPlatform(platform);
         cap.setVersion(adb.getAndroidVersionAsString());
@@ -43,10 +58,11 @@ public class AppiumManager {
 
     public DriverService startAppiumServer(DesiredCapabilities cap, AppiumServiceBuilder builder) {
         cap.setCapability(AppiumConstants.NO_RESET, AppiumConstants.FALSE);
-        AppiumDriverLocalService service = builder.usingDriverExecutable(new File(System.getProperty("nodeJsUrl")))
-                .withIPAddress(System.getProperty("appiumServerUrl")).build();
+        AppiumDriverLocalService service = AppiumDriverLocalService.buildService(builder
+                .usingDriverExecutable(new File(System.getProperty("nodeJsUrl")))
+                .withIPAddress(System.getProperty("appiumServerUrl")));
         serviceThreadLocal.set(service);
-        LOGGER.info("Start Appium server for device " + getUsedDeviceName() + " >>>>>>>>>>>>>>>>>>>");
+        LOGGER.info("Start Appium server for device " + getUsedDeviceName() + " " + getUsedDeviceId() + " >>>>>>>>>>>>>>>>>>>");
         service.start();
         return service;
     }
@@ -64,18 +80,18 @@ public class AppiumManager {
     }
 
     public String getUsedDeviceId() {
-        return adb.getDeviceId();
+        return adbThreadLocal.get().getDeviceId();
     }
 
     public String getUsedDeviceName() {
-        return adb.getDeviceModel();
+        return adbThreadLocal.get().getDeviceModel();
     }
 
     public void stopAppiumServer() {
         if (serviceThreadLocal.get() != null) {
-            LOGGER.info("Uninstall application and stopping appium server for device " + getUsedDeviceName() + " >>>>>>>>>>>>>>>>>>>");
-            adb.uninstallApp(System.getProperty("unlockPackage"));
-            adb.uninstallApp(System.getProperty("applicationPackage"));
+            LOGGER.info("Uninstall application and stopping appium server for device " + getUsedDeviceName() + getUsedDeviceId() + " >>>>>>>>>>>>>>>>>>>");
+            adbThreadLocal.get().uninstallApp(System.getProperty("unlockPackage"));
+            adbThreadLocal.get().uninstallApp(System.getProperty("applicationPackage"));
             serviceThreadLocal.get().stop();
         } else {
             LOGGER.error("Appium server is not initialized, nothing to stop");
@@ -84,13 +100,15 @@ public class AppiumManager {
 
     public void removeAllAppiumServer() {
         LOGGER.info("Removing all appium server >>>>>>>>>>>>>>>>>>>>>>");
-        adb.removeAllDeviceId();
+        adbThreadLocal.get().removeAllDeviceId();
+        adbThreadLocal.remove();
         serviceThreadLocal.remove();
     }
 
     /**
      * Get all connected devices then put it into a hash map with Key = "device id"
      * AND Value = "true/false"
+     *
      * @return HashMap
      */
     @SuppressWarnings("unchecked")
@@ -110,17 +128,15 @@ public class AppiumManager {
     }
 
     private String getFreeDevice() {
-        if (deviceMap == null) {
-            deviceMap = getConnectedDevices();
-        }
+        LOGGER.info("Get free device for thread: " + Thread.currentThread().getName() + " >>>>>>>>>>>>>>>>>>>>>");
         for (HashMap.Entry<String, Boolean> entry : deviceMap.entrySet()) {
             if (entry.getValue()) {
                 entry.setValue(false);
                 return entry.getKey();
             }
         }
-        LOGGER.debug("Not a single device is free >>>>>>>>>>>>>>");
-        return null;
+        LOGGER.error("No device is free... so appium server of this thread could not start >>>>>>>>>>>>>>");
+        throw new NullPointerException();
     }
 
     public void killProcess(String serviceName) {

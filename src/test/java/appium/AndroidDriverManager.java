@@ -24,6 +24,7 @@ public class AndroidDriverManager {
         }
 
         DesiredCapabilities capabilities = new DesiredCapabilities();
+        //TODO: Define correct name of device if user want to create driver for it
         capabilities.setCapability(AppiumConstants.DEVICE_NAME, deviceName);
         capabilities.setCapability(AppiumConstants.NEW_COMMAND_TIMEOUT, System.getProperty("newCommandTimeout"));
         capabilities.setCapability(AppiumConstants.ANDROID_DEVICE_READY_TIMEOUT, System.getProperty("androidDeviceReadyTimeout"));

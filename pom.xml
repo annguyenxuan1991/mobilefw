@@ -31,6 +31,7 @@
     <properties>
         <log4j.version>1.2.17</log4j.version>
         <io.appium.version>5.0.4</io.appium.version>
+        <org.testng.version>6.9.10</org.testng.version>
     </properties>
 
     <dependencies>
@@ -48,6 +49,11 @@
             <groupId>vn.hsntech</groupId>
             <artifactId>common</artifactId>
             <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${org.testng.version}</version>
         </dependency>
 
     </dependencies>

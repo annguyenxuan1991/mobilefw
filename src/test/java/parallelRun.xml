@@ -1,0 +1,11 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<!-- TestNG Documentation: http://testng.org/doc/documentation-main.html -->
+<!-- Change "false" to "tests", "methods", "classes" or "instances" for running in parallel. See more details in the TestNG documentation. -->
+<suite name="dragonBall" parallel="classes" thread-count="2" verbose="2">
+    <test name="exampleRun">
+        <classes>
+            <class name="TestAndroidDriver"/>
+            <class name="TestAndroidDriver2"/>
+        </classes>
+    </test>
+</suite>
