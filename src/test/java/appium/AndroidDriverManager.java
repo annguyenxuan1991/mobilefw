@@ -8,12 +8,12 @@ import utils.CommonUtils;
 
 import java.io.File;
 
-public class DriverManager {
+public class AndroidDriverManager {
     private static final Logger LOGGER = Logger.getLogger(AppiumManager.class);
 
-    private static ThreadLocal<AndroidDriver> androidDriverThreadLocal = new ThreadLocal<>();
+    private static final ThreadLocal<AndroidDriver> androidDriverThreadLocal = new ThreadLocal<>();
 
-    public AndroidDriver createAndroidDriver(DriverService driverService) {
+    public AndroidDriver createDriver(String deviceName, DriverService driverService) {
         AndroidDriver androidDriver;
         File app;
 
@@ -24,20 +24,21 @@ public class DriverManager {
         }
 
         DesiredCapabilities capabilities = new DesiredCapabilities();
+        capabilities.setCapability(AppiumConstants.DEVICE_NAME, deviceName);
         capabilities.setCapability(AppiumConstants.NEW_COMMAND_TIMEOUT, System.getProperty("newCommandTimeout"));
         capabilities.setCapability(AppiumConstants.ANDROID_DEVICE_READY_TIMEOUT, System.getProperty("androidDeviceReadyTimeout"));
         capabilities.setCapability(AppiumConstants.AUTO_GRANT_PERMISSIONS, System.getProperty("autoGrantPermissions"));
         capabilities.setCapability(AppiumConstants.APPLICATION, app.getAbsolutePath());
         capabilities.setCapability(AppiumConstants.APP_PACKAGE, System.getProperty("applicationPackage"));
         capabilities.setCapability(AppiumConstants.APP_ACTIVITY, System.getProperty("applicationActivity"));
-        capabilities.setCapability(AppiumConstants.APP_WAIT_ACTIVITY, System.getProperty("applicationWaitActivity"));
+        LOGGER.info("Create Android driver for device " + deviceName + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         androidDriver = new AndroidDriver(driverService.getUrl(), capabilities);
         androidDriverThreadLocal.set(androidDriver);
         return androidDriver;
     }
 
-    public AndroidDriver getAndroidDriver() {
-        if(androidDriverThreadLocal.get() != null) {
+    public AndroidDriver getDriver() {
+        if (androidDriverThreadLocal.get() != null) {
             return androidDriverThreadLocal.get();
         } else {
             LOGGER.error("Android driver is not initialized, nothing to get");

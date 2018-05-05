@@ -20,15 +20,14 @@ import java.util.HashMap;
 public class AppiumManager {
     private static final Logger LOGGER = Logger.getLogger(AppiumManager.class);
 
+    private static final ThreadLocal<DriverService> serviceThreadLocal = new ThreadLocal<>();
     private static HashMap<String, Boolean> deviceMap;
-    private static ThreadLocal<String> deviceIdThreadLocal = new ThreadLocal<>();
-    private static ThreadLocal<DriverService> serviceThreadLocal = new ThreadLocal<>();
+    private ADB adb;
 
     public DriverService startAppiumServer(Platform platform) {
         String freeDevice = getFreeDevice();
-        deviceIdThreadLocal.set(freeDevice);
 
-        ADB adb = new ADB(freeDevice);
+        adb = new ADB(freeDevice);
         DesiredCapabilities cap = new DesiredCapabilities();
 
         cap.setPlatform(platform);
@@ -47,8 +46,13 @@ public class AppiumManager {
         AppiumDriverLocalService service = builder.usingDriverExecutable(new File(System.getProperty("nodeJsUrl")))
                 .withIPAddress(System.getProperty("appiumServerUrl")).build();
         serviceThreadLocal.set(service);
+        LOGGER.info("Start Appium server for device " + getUsedDeviceName() + " >>>>>>>>>>>>>>>>>>>");
         service.start();
         return service;
+    }
+
+    public DriverService getAppiumServerInstance() {
+        return serviceThreadLocal.get();
     }
 
     public boolean isAppiumServerRunning() {
@@ -60,41 +64,59 @@ public class AppiumManager {
     }
 
     public String getUsedDeviceId() {
-        return deviceIdThreadLocal.get();
+        return adb.getDeviceId();
+    }
+
+    public String getUsedDeviceName() {
+        return adb.getDeviceModel();
     }
 
     public void stopAppiumServer() {
         ADB adb = new ADB(getUsedDeviceId());
-        if(serviceThreadLocal.get() != null) {
-            LOGGER.info("Uninstall application and stopping appium server for device id " + deviceIdThreadLocal.get()+ " >>>>>>>>>>>>>>>>>>>");
+        if (serviceThreadLocal.get() != null) {
+            LOGGER.info("Uninstall application and stopping appium server for device " + getUsedDeviceName() + " >>>>>>>>>>>>>>>>>>>");
             adb.uninstallApp(System.getProperty("unlockPackage"));
+            adb.uninstallApp(System.getProperty("applicationPackage"));
             serviceThreadLocal.get().stop();
         } else {
             LOGGER.error("Appium server is not initialized, nothing to stop");
         }
     }
 
+    public void removeAllAppiumServer() {
+        LOGGER.info("Removing all appium server >>>>>>>>>>>>>>>>>>>>>>");
+        adb.removeAllDeviceId();
+        serviceThreadLocal.remove();
+    }
+
     /**
      * Get all connected devices then put it into a hash map with Key = "device id"
      * AND Value = "true/false".
+     *
      * @return HashMap
      */
     @SuppressWarnings("unchecked")
     private HashMap<String, Boolean> getConnectedDevices() {
         ArrayList<String> deviceList = ADB.getConnectedDevices();
+        LOGGER.info("Getting all connected devices >>>>>>>>>>>>>>>>>>>>>>>");
+        if (deviceList == null || deviceList.isEmpty()) {
+            LOGGER.error("Not a single device is connected, please check your connection >>>>>>>>>>>>>>>>>>>");
+            throw new NullPointerException();
+        }
+        LOGGER.info("We have " + deviceList.size() + " connected >>>>>>>>>>>>>>>>>>>>>>");
         HashMap<String, Boolean> deviceMap = new HashMap<>();
-        for (String device: deviceList) {
+        for (String device : deviceList) {
             deviceMap.put(device, true);
         }
         return deviceMap;
     }
 
     private String getFreeDevice() {
-        if(deviceMap == null) {
+        if (deviceMap == null) {
             deviceMap = getConnectedDevices();
         }
         for (HashMap.Entry<String, Boolean> entry : deviceMap.entrySet()) {
-            if(entry.getValue()) {
+            if (entry.getValue()) {
                 entry.setValue(false);
                 return entry.getKey();
             }
@@ -104,9 +126,9 @@ public class AppiumManager {
     }
 
     public void killProcess(String serviceName) {
-        while(true) {
+        while (true) {
             try {
-                if(isProcessRunning(serviceName)) {
+                if (isProcessRunning(serviceName)) {
                     String commandLine = "taskkill /f /IM " + serviceName;
                     LOGGER.debug("Execute command line: [" + commandLine + "]");
                     Runtime.getRuntime().exec(commandLine);
@@ -126,10 +148,10 @@ public class AppiumManager {
 
             String line;
             do {
-                if((line = reader.readLine()) == null) {
+                if ((line = reader.readLine()) == null) {
                     return false;
                 }
-            } while(!line.contains(serviceName));
+            } while (!line.contains(serviceName));
 
             LOGGER.info(serviceName + " is running >>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
             return true;
@@ -149,8 +171,6 @@ public class AppiumManager {
         } catch (IOException e) {
             //If control comes here, then it means that the port is in use
             isServerRunning = true;
-        } finally {
-            serverSocket = null;
         }
         return isServerRunning;
     }

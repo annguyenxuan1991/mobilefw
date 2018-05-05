@@ -7,10 +7,19 @@ import java.util.Arrays;
 
 public class ADB {
     private static Logger LOGGER = Logger.getLogger(ADB.class);
-    private String deviceId;
+
+    private static final ThreadLocal<String> deviceIdThreadLocal = new ThreadLocal<>();
 
     public ADB(String deviceId) {
-        this.deviceId = deviceId;
+        deviceIdThreadLocal.set(deviceId);
+    }
+
+    public String getDeviceId() {
+        return deviceIdThreadLocal.get();
+    }
+
+    public void removeAllDeviceId() {
+        deviceIdThreadLocal.remove();
     }
 
     private static String command(String command) {
@@ -43,11 +52,11 @@ public class ADB {
     }
 
     public String getForegroundActivity() {
-        return command("adb -s " + deviceId + " shell dumpsys window windows | grep mCurrentFocus");
+        return command("adb -s " + deviceIdThreadLocal.get() + " shell dumpsys window windows | grep mCurrentFocus");
     }
 
     public String getAndroidVersionAsString() {
-        String output = command("adb -s " + deviceId + " shell getprop ro.build.version.release");
+        String output = command("adb -s " + deviceIdThreadLocal.get() + " shell getprop ro.build.version.release");
         if (output.length() == 3) output += ".0";
         return output;
     }
@@ -58,74 +67,74 @@ public class ADB {
 
     public ArrayList getInstalledPackages() {
         ArrayList packages = new ArrayList();
-        String[] output = command("adb -s " + deviceId + " shell pm list packages").split("\n");
+        String[] output = command("adb -s " + deviceIdThreadLocal.get() + " shell pm list packages").split("\n");
         for (String packageID : output) packages.add(packageID.replace("package:", "").trim());
         return packages;
     }
 
     public void openAppsActivity(String packageID, String activityID) {
-        command("adb -s " + deviceId + " shell am start -c api.android.intent.category.LAUNCHER -a api.android.intent.action.MAIN -n " + packageID + "/" + activityID);
+        command("adb -s " + deviceIdThreadLocal.get() + " shell am start -c api.android.intent.category.LAUNCHER -a api.android.intent.action.MAIN -n " + packageID + "/" + activityID);
     }
 
     public void clearAppsData(String packageID) {
-        command("adb -s " + deviceId + " shell pm clear " + packageID);
+        command("adb -s " + deviceIdThreadLocal.get() + " shell pm clear " + packageID);
     }
 
     public void forceStopApp(String packageID) {
-        command("adb -s " + deviceId + " shell am force-stop " + packageID);
+        command("adb -s " + deviceIdThreadLocal.get() + " shell am force-stop " + packageID);
     }
 
     public void installApp(String apkPath) {
-        command("adb -s " + deviceId + " install " + apkPath);
+        command("adb -s " + deviceIdThreadLocal.get() + " install " + apkPath);
     }
 
     public void uninstallApp(String packageID) {
-        command("adb -s " + deviceId + " uninstall " + packageID);
+        command("adb -s " + deviceIdThreadLocal.get() + " uninstall " + packageID);
     }
 
     public void clearLogBuffer() {
-        command("adb -s " + deviceId + " shell -c");
+        command("adb -s " + deviceIdThreadLocal.get() + " shell -c");
     }
 
     public void pushFile(String source, String target) {
-        command("adb -s " + deviceId + " push " + source + " " + target);
+        command("adb -s " + deviceIdThreadLocal.get() + " push " + source + " " + target);
     }
 
     public void pullFile(String source, String target) {
-        command("adb -s " + deviceId + " pull " + source + " " + target);
+        command("adb -s " + deviceIdThreadLocal.get() + " pull " + source + " " + target);
     }
 
     public void deleteFile(String target) {
-        command("adb -s " + deviceId + " shell rm " + target);
+        command("adb -s " + deviceIdThreadLocal.get() + " shell rm " + target);
     }
 
     public void moveFile(String source, String target) {
-        command("adb -s " + deviceId + " shell mv " + source + " " + target);
+        command("adb -s " + deviceIdThreadLocal.get() + " shell mv " + source + " " + target);
     }
 
     public void takeScreenshot(String target) {
-        command("adb -s " + deviceId + " shell screencap " + target);
+        command("adb -s " + deviceIdThreadLocal.get() + " shell screencap " + target);
     }
 
     public void rebootDevice() {
-        command("adb -s " + deviceId + " reboot");
+        command("adb -s " + deviceIdThreadLocal.get() + " reboot");
     }
 
     public String getDeviceModel() {
-        return command("adb -s " + deviceId + " shell getprop ro.product.model");
+        return command("adb -s " + deviceIdThreadLocal.get() + " shell getprop ro.product.model");
     }
 
     public String getDeviceSerialNumber() {
-        return command("adb -s " + deviceId + " shell getprop ro.serialno");
+        return command("adb -s " + deviceIdThreadLocal.get() + " shell getprop ro.serialno");
     }
 
     public String getDeviceCarrier() {
-        return command("adb -s " + deviceId + " shell getprop gsm.operator.alpha");
+        return command("adb -s " + deviceIdThreadLocal.get() + " shell getprop gsm.operator.alpha");
     }
 
     @SuppressWarnings("unchecked")
     public ArrayList getLogcatProcesses() {
-        String[] output = command("adb -s " + deviceId + " shell top -n 1 | grep -i 'logcat'").split("\n");
+        String[] output = command("adb -s " + deviceIdThreadLocal.get() + " shell top -n 1 | grep -i 'logcat'").split("\n");
         ArrayList processes = new ArrayList();
         for (String line : output) {
             processes.add(line.split(" ")[0]);
@@ -141,9 +150,9 @@ public class ADB {
         Thread logcat = new Thread(new Runnable() {
             public void run() {
                 if (grep == null)
-                    command("adb -s " + deviceId + " shell logcat -v threadtime > /sdcard/" + logID + ".txt");
+                    command("adb -s " + deviceIdThreadLocal.get() + " shell logcat -v threadtime > /sdcard/" + logID + ".txt");
                 else
-                    command("adb -s " + deviceId + " shell logcat -v threadtime | grep -i '" + grep + "'> /sdcard/" + logID + ".txt");
+                    command("adb -s " + deviceIdThreadLocal.get() + " shell logcat -v threadtime | grep -i '" + grep + "'> /sdcard/" + logID + ".txt");
             }
         });
         logcat.setName(logID);
@@ -166,6 +175,6 @@ public class ADB {
     }
 
     public void stopLogcat(Object PID) {
-        command("adb -s " + deviceId + " shell kill " + PID);
+        command("adb -s " + deviceIdThreadLocal.get() + " shell kill " + PID);
     }
 }
