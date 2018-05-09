@@ -13,7 +13,7 @@ public class TestAndroidDriver2 extends FatherTest {
         DriverService appiumDriverService = appiumManager.getAppiumServerInstance();
         System.out.println("Appium service instance [PORT]: "+ appiumDriverService.getUrl().getPort());
         System.out.println("Appium service instance [USER INFO]: "+ appiumDriverService.getUrl().getUserInfo());
-        AndroidDriver androidDriver1 = androidDriverManager.createDriver(appiumManager.getUsedDeviceName(), appiumManager.getAppiumServerInstance());
+        AndroidDriver androidDriver1 = androidDriverManager.createDriver(appiumManager.getADB(), appiumManager.getAppiumServerInstance());
         AndroidDriver androidDriver2 = androidDriverManager.getDriver();
         boolean isAppiumRunning = appiumManager.isAppiumServerRunning();
         androidDriverManager.killDriver();

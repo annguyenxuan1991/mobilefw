@@ -14,4 +14,6 @@ public class AppiumConstants {
     public static final String AUTO_GRANT_PERMISSIONS = "autoGrantPermissions";
     public static final String NEW_COMMAND_TIMEOUT = "newCommandTimeout";
     public static final String ANDROID_DEVICE_READY_TIMEOUT = "androidDeviceReadyTimeout";
+    public static final String UDID = "udid";
+    public static final String SYSTEM_PORT = "systemPort";
 }

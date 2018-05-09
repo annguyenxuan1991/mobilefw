@@ -41,13 +41,9 @@ public class AppiumManager {
     }
 
     public DriverService startAppiumServer(Platform platform) {
-        ADB adb = new ADB(getFreeDevice());
+        adbThreadLocal.set(new ADB(getFreeDevice()));
         DesiredCapabilities cap = new DesiredCapabilities();
-        adbThreadLocal.set(adb);
-
         cap.setPlatform(platform);
-        cap.setVersion(adb.getAndroidVersionAsString());
-        cap.setCapability(AppiumConstants.DEVICE_NAME, adb.getDeviceModel());
 
         AppiumServiceBuilder builder = new AppiumServiceBuilder()
                 .withArgument(GeneralServerFlag.SESSION_OVERRIDE)
@@ -85,6 +81,10 @@ public class AppiumManager {
 
     public String getUsedDeviceName() {
         return adbThreadLocal.get().getDeviceModel();
+    }
+
+    public ADB getADB() {
+        return adbThreadLocal.get();
     }
 
     public void stopAppiumServer() {
